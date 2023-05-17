@@ -101,7 +101,7 @@
   </url>
   
   <url>
-    <loc>http://lvyanquan.github.io/categories/index.html</loc>
+    <loc>http://lvyanquan.github.io/tags/index.html</loc>
     
     <lastmod>2023-03-12</lastmod>
     
@@ -110,7 +110,7 @@
   </url>
   
   <url>
-    <loc>http://lvyanquan.github.io/tags/index.html</loc>
+    <loc>http://lvyanquan.github.io/categories/index.html</loc>
     
     <lastmod>2023-03-12</lastmod>
     
@@ -151,20 +151,6 @@
   </url>
   
   <url>
-    <loc>http://lvyanquan.github.io/tags/bugfix/</loc>
-    <lastmod>2023-05-17</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lvyanquan.github.io/tags/Java/</loc>
-    <lastmod>2023-05-17</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lvyanquan.github.io/tags/Hudi/</loc>
     <lastmod>2023-05-17</lastmod>
     <changefreq>weekly</changefreq>
@@ -173,6 +159,20 @@
   
   <url>
     <loc>http://lvyanquan.github.io/tags/%E6%95%B0%E6%8D%AE%E6%B9%96/</loc>
+    <lastmod>2023-05-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lvyanquan.github.io/tags/bugfix/</loc>
+    <lastmod>2023-05-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lvyanquan.github.io/tags/Java/</loc>
     <lastmod>2023-05-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
