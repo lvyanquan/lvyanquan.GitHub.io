@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Hudi 查询加速 | 困溺的博客</title>
+  <meta name="description" content="索引Hudi 支持多种索引：     HBASE, INMEMORY, BLOOM, GLOBAL_BLOOM, SIMPLE, GLOBAL_SIMPLE, BUCKET。    但以下索引不建议使用：  INMEMRY 索引  根据内存中的索引数据去匹配，基本不可用  SIMPLE 索引  根据新数据所在的分区，获取受影响的分区文件列表，直接读取该部分 parquet 文件的 partitio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hudi 查询加速">
+<meta property="og:url" content="http://lvyanquan.github.io/2023/03/12/Hudi%20%E6%9F%A5%E8%AF%A2%E5%8A%A0%E9%80%9F/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="索引Hudi 支持多种索引：     HBASE, INMEMORY, BLOOM, GLOBAL_BLOOM, SIMPLE, GLOBAL_SIMPLE, BUCKET。    但以下索引不建议使用：  INMEMRY 索引  根据内存中的索引数据去匹配，基本不可用  SIMPLE 索引  根据新数据所在的分区，获取受影响的分区文件列表，直接读取该部分 parquet 文件的 partitio">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-03-12T02:22:41.000Z">
+<meta property="article:modified_time" content="2023-03-15T02:56:30.019Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据湖">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://lvyanquan.github.io/2023/03/12/Hudi%20%E6%9F%A5%E8%AF%A2%E5%8A%A0%E9%80%9F/index.html">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+</head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/lvyanquan" target="_blank">
+          <img class="img-circle img-rotate" src="/images/luxi.jpeg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">困溺</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Big Data &amp; Open Source</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Zhejiang, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/lvyanquan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://twitter.com/decq12ybhl" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>code for fun!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/FlinkCDC/" rel="tag">FlinkCDC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hudi/" rel="tag">Hudi</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/bugfix/" rel="tag">bugfix</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/juc/" rel="tag">juc</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE/" rel="tag">大数据</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E6%B9%96/" rel="tag">数据湖</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/FlinkCDC/" style="font-size: 13px;">FlinkCDC</a> <a href="/tags/Hudi/" style="font-size: 13px;">Hudi</a> <a href="/tags/Java/" style="font-size: 14px;">Java</a> <a href="/tags/bugfix/" style="font-size: 13px;">bugfix</a> <a href="/tags/juc/" style="font-size: 13px;">juc</a> <a href="/tags/linux/" style="font-size: 13px;">linux</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE/" style="font-size: 13px;">大数据</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E6%B9%96/" style="font-size: 13px;">数据湖</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 14px;">算法</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 13px;">运维</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a><span class="archive-list-count">5</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2023/05/17/Hudi%20merge%20into%E5%A4%9A%E6%9D%A1%E4%BB%B6%E6%9B%B4%E6%96%B0/" class="title">Hudi merge into多条件更新</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-05-17T05:50:09.575Z" itemprop="datePublished">2023-05-17</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2023/05/12/%E4%BD%BF%E7%94%A8anki%E6%9E%84%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%95%E8%AF%8D%E5%AD%A6%E4%B9%A0%E5%BA%93/" class="title">使用anki构建个人单词学习库</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-05-12T08:37:54.842Z" itemprop="datePublished">2023-05-12</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2023/05/10/LinkageError%E8%A7%A3%E5%86%B3/" class="title">LinkageError解决</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-05-10T11:35:42.700Z" itemprop="datePublished">2023-05-10</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2023/05/09/volatile%E5%85%B3%E9%94%AE%E5%AD%97/" class="title">volatile关键字</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-05-09T11:30:50.219Z" itemprop="datePublished">2023-05-09</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2023/05/06/FlinkCDC%E5%85%A8%E5%A2%9E%E9%87%8F%E8%AF%BB%E5%8F%96%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">FlinkCDC全增量读取源码分析</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2023-05-06T11:36:30.312Z" itemprop="datePublished">2023-05-06</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-Hudi 查询加速" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Hudi 查询加速
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/03/12/Hudi%20%E6%9F%A5%E8%AF%A2%E5%8A%A0%E9%80%9F/" class="article-date">
+	  <time datetime="2023-03-12T02:22:41.000Z" itemprop="datePublished">2023-03-12</time>
+	</a>
+</span>
+        
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E6%95%B0%E6%8D%AE%E6%B9%96/" rel="tag">数据湖</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/03/12/Hudi%20%E6%9F%A5%E8%AF%A2%E5%8A%A0%E9%80%9F/#comments" class="article-comment-link">Comments</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h1><p>Hudi 支持多种索引：    </p>
+<p>HBASE, INMEMORY, BLOOM, GLOBAL_BLOOM, SIMPLE, GLOBAL_SIMPLE, BUCKET。   </p>
+<p>但以下索引不建议使用：</p>
+<ul>
+<li>INMEMRY 索引</li>
+</ul>
+<p>根据内存中的索引数据去匹配，基本不可用</p>
+<ul>
+<li>SIMPLE 索引</li>
+</ul>
+<p>根据新数据所在的分区，获取受影响的分区文件列表，直接读取该部分 parquet 文件的 partition_key 和 record_key，与新数据执行 leftOutJoin 产生索引数据，性能低下（以 hoodieKey 为匹配键）</p>
+<ul>
+<li>HBASE 索引</li>
+</ul>
+<p>需要引入额外的 Hbase 服务，业务方基本不会允许</p>
+<ul>
+<li>GLOBAL_SIMPLE 索引</li>
+</ul>
+<p>与 SIMPLE 索引相比，GLOBAL_SIMPLE 索引读取的旧数据是全量数据，以 recordkey为匹配键，性能更低下 </p>
+<h3 id="BLOOM"><a href="#BLOOM" class="headerlink" title="BLOOM"></a>BLOOM</h3><h4 id="写入信息"><a href="#写入信息" class="headerlink" title="写入信息"></a>写入信息</h4><p>org.apache.hudi.avro.HoodieBloomFilterWriteSupport#finalizeMetadata.  </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Map&lt;String, String&gt; <span class="title function_">finalizeMetadata</span><span class="params">()</span> &#123;</span><br><span class="line">    HashMap&lt;String, String&gt; extraMetadata = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    extraMetadata.put(HOODIE_AVRO_BLOOM_FILTER_METADATA_KEY, bloomFilter.serializeToString());</span><br><span class="line">    <span class="keyword">if</span> (bloomFilter.getBloomFilterTypeCode().name().contains(HoodieDynamicBoundedBloomFilter.TYPE_CODE_PREFIX)) &#123;</span><br><span class="line">        extraMetadata.put(HOODIE_BLOOM_FILTER_TYPE_CODE, bloomFilter.getBloomFilterTypeCode().name());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (minRecordKey != <span class="literal">null</span> &amp;&amp; maxRecordKey != <span class="literal">null</span>) &#123;</span><br><span class="line">        extraMetadata.put(HOODIE_MIN_RECORD_KEY_FOOTER, minRecordKey.toString());</span><br><span class="line">        extraMetadata.put(HOODIE_MAX_RECORD_KEY_FOOTER, maxRecordKey.toString());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> extraMetadata;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到这里会写入布隆过滤器序列化后的信息和主键的 MIN&#x2F;MAX 信息。<br>写入到 parquet 文件的 footer 中。</p>
+<h4 id="读取信息"><a href="#读取信息" class="headerlink" title="读取信息"></a>读取信息</h4><p>org.apache.hudi.common.util.BaseFileUtils#readBloomFilterFromMetadata.  </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> BloomFilter <span class="title function_">readBloomFilterFromMetadata</span><span class="params">(Configuration configuration, Path filePath)</span> &#123;</span><br><span class="line">  Map&lt;String, String&gt; footerVals =</span><br><span class="line">      readFooter(configuration, <span class="literal">false</span>, filePath,</span><br><span class="line">          HoodieAvroWriteSupport.HOODIE_AVRO_BLOOM_FILTER_METADATA_KEY,</span><br><span class="line">          HoodieAvroWriteSupport.OLD_HOODIE_AVRO_BLOOM_FILTER_METADATA_KEY,</span><br><span class="line">          HoodieBloomFilterWriteSupport.HOODIE_BLOOM_FILTER_TYPE_CODE);</span><br><span class="line">  <span class="type">String</span> <span class="variable">footerVal</span> <span class="operator">=</span> footerVals.get(HoodieAvroWriteSupport.HOODIE_AVRO_BLOOM_FILTER_METADATA_KEY);</span><br><span class="line">  <span class="keyword">if</span> (<span class="literal">null</span> == footerVal) &#123;</span><br><span class="line">    <span class="comment">// We use old style key &quot;com.uber.hoodie.bloomfilter&quot;</span></span><br><span class="line">    footerVal = footerVals.get(HoodieAvroWriteSupport.OLD_HOODIE_AVRO_BLOOM_FILTER_METADATA_KEY);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="type">BloomFilter</span> <span class="variable">toReturn</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">if</span> (footerVal != <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (footerVals.containsKey(HoodieBloomFilterWriteSupport.HOODIE_BLOOM_FILTER_TYPE_CODE)) &#123;</span><br><span class="line">      toReturn = BloomFilterFactory.fromString(footerVal,</span><br><span class="line">          footerVals.get(HoodieBloomFilterWriteSupport.HOODIE_BLOOM_FILTER_TYPE_CODE));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      toReturn = BloomFilterFactory.fromString(footerVal, BloomFilterTypeCode.SIMPLE.name());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> toReturn;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从 footer 中读取信息，构建布隆过滤器。</p>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>还是写入 footer 中，跟 Iceberg 差不多，只是 bloomfilter 的算法可能不同。</p>
+<h3 id="GLOBAL-BLOOM"><a href="#GLOBAL-BLOOM" class="headerlink" title="GLOBAL_BLOOM"></a>GLOBAL_BLOOM</h3><p>全局索引强制跨表的所有分区的键的唯一性，即保证表中对于给定的记录键恰好存在一条记录。</p>
+<h4 id="和-BLOOM-的区别"><a href="#和-BLOOM-的区别" class="headerlink" title="和 BLOOM 的区别"></a>和 BLOOM 的区别</h4><p>加载文件时加载全部分区的数据文件.<br>org.apache.hudi.index.bloom.HoodieGlobalBloomIndex#loadColumnRangesFromFiles</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line">List&lt;Pair&lt;String, BloomIndexFileInfo&gt;&gt; <span class="title function_">loadColumnRangesFromFiles</span><span class="params">(List&lt;String&gt; partitions, <span class="keyword">final</span> HoodieEngineContext context,</span></span><br><span class="line"><span class="params">                                                                 <span class="keyword">final</span> HoodieTable hoodieTable)</span> &#123;</span><br><span class="line">  <span class="type">HoodieTableMetaClient</span> <span class="variable">metaClient</span> <span class="operator">=</span> hoodieTable.getMetaClient();</span><br><span class="line">  List&lt;String&gt; allPartitionPaths = FSUtils.getAllPartitionPaths(context, config.getMetadataConfig(), metaClient.getBasePath());</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">super</span>.loadColumnRangesFromFiles(allPartitionPaths, context, hoodieTable);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>org.apache.hudi.index.bloom.HoodieBloomIndex#loadColumnRangesFromFiles.<br>只加载特定分区</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Pair&lt;String, BloomIndexFileInfo&gt;&gt; <span class="title function_">loadColumnRangesFromFiles</span><span class="params">(</span></span><br><span class="line"><span class="params">    List&lt;String&gt; partitions, <span class="keyword">final</span> HoodieEngineContext context, <span class="keyword">final</span> HoodieTable hoodieTable)</span> &#123;</span><br><span class="line">  <span class="comment">// Obtain the latest data files from all the partitions.</span></span><br><span class="line">  List&lt;Pair&lt;String, Pair&lt;String, HoodieBaseFile&gt;&gt;&gt; partitionPathFileIDList = getLatestBaseFilesForAllPartitions(partitions, context, hoodieTable).stream()</span><br><span class="line">      .map(pair -&gt; Pair.of(pair.getKey(), Pair.of(pair.getValue().getFileId(), pair.getValue())))</span><br><span class="line">      .collect(toList());</span><br><span class="line"></span><br><span class="line">  context.setJobStatus(<span class="built_in">this</span>.getClass().getName(), <span class="string">&quot;Obtain key ranges for file slices (range pruning=on): &quot;</span> + config.getTableName());</span><br><span class="line">  <span class="keyword">return</span> context.map(partitionPathFileIDList, pf -&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="type">HoodieRangeInfoHandle</span> <span class="variable">rangeInfoHandle</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HoodieRangeInfoHandle</span>(config, hoodieTable, Pair.of(pf.getKey(), pf.getValue().getKey()));</span><br><span class="line">      String[] minMaxKeys = rangeInfoHandle.getMinMaxKeys(pf.getValue().getValue());</span><br><span class="line">      <span class="keyword">return</span> Pair.of(pf.getKey(), <span class="keyword">new</span> <span class="title class_">BloomIndexFileInfo</span>(pf.getValue().getKey(), minMaxKeys[<span class="number">0</span>], minMaxKeys[<span class="number">1</span>]));</span><br><span class="line">    &#125; <span class="keyword">catch</span> (MetadataNotFoundException me) &#123;</span><br><span class="line">      LOG.warn(<span class="string">&quot;Unable to find range metadata in file :&quot;</span> + pf);</span><br><span class="line">      <span class="keyword">return</span> Pair.of(pf.getKey(), <span class="keyword">new</span> <span class="title class_">BloomIndexFileInfo</span>(pf.getValue().getKey()));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;, Math.max(partitionPathFileIDList.size(), <span class="number">1</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="结论-1"><a href="#结论-1" class="headerlink" title="结论"></a>结论</h4><p>这么看，GLOBAL_BLOOM 并不能实现比 BLOOM 更好的性能。</p>
+<h3 id="BUCKET"><a href="#BUCKET" class="headerlink" title="BUCKET"></a>BUCKET</h3><p>推荐在较大数据量的场景下使用，避免布隆过滤器的假阳性问题。</p>
+<h1 id="MetadataTable"><a href="#MetadataTable" class="headerlink" title="MetadataTable"></a>MetadataTable</h1><p>MetadataTable 是一张包含元数据的 mor 表，记录了数据表的文件、列统计、布隆过滤器的信息。</p>
+<p>写入打标：</p>
+<table border="1">
+<tr>
+  <td> engine </td>
+  <td> column_stat_idx </td>
+  <td> bloom_filter_idx </td>
+  <td> bucket_idx </td>
+  <td> flink_state </td>
+  <td> Simple </td>
+  <td> Hbase_idx </td>
+</tr>
+<tr>
+  <td> Spark </td>
+  <td> Y </td>
+  <td> Y </td>
+  <td> Y </td>
+  <td> N flink only </td>
+  <td> Y </td>
+  <td> Y </td>
+</tr>
+<tr>
+  <td> Spark </td>
+  <td> N </td>
+  <td> N </td>
+  <td> Y </td>
+  <td> Y </td>
+  <td> N spark only </td>
+  <td> N </td>  
+</tr>
+</table>
+
+<p>MetaDataTable表索引分区构建： </p>
+<table border="1">
+<tr>
+  <td> engine </td>
+  <td> file_idx </td>
+  <td> column_stat_idx </td>
+  <td> bloom_filter_idx </td>
+</tr>
+<tr>
+  <td> Spark </td>
+  <td> Y </td>
+  <td> Y </td>
+  <td> Y </td>
+</tr>
+<tr>
+  <td> Spark </td>
+  <td> Y </td>
+  <td> Y </td>
+  <td> Y </td>
+</tr>
+</table>
+
+<p>读取data skipping： </p>
+<table border="1">
+<tr>
+  <td> engine </td>
+  <td> column_stat_idx </td>
+  <td> bloom_filter_idx </td>
+  <td> bucket_idx </td>
+</tr>
+<tr>
+  <td> Spark </td>
+  <td> Y </td>
+  <td> N </td>
+  <td> N </td>
+</tr>
+<tr>
+  <td> Spark </td>
+  <td> Y </td>
+  <td> N </td>
+  <td> N </td>
+</tr>
+</table>
+
+<p>MetadataTable 的使用.<br>org.apache.hudi.HoodieFileIndex#lookupCandidateFilesInMetadataTable</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Computes pruned list of candidate base-files&#x27; names based on provided list of &#123;@link dataFilters&#125;</span></span><br><span class="line"><span class="comment"> * conditions, by leveraging Metadata Table&#x27;s Column Statistics index (hereon referred as ColStats for brevity)</span></span><br><span class="line"><span class="comment"> * bearing &quot;min&quot;, &quot;max&quot;, &quot;num_nulls&quot; statistics for all columns.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">NOTE:</span> This method has to return complete set of candidate files, since only provided candidates will</span></span><br><span class="line"><span class="comment"> * ultimately be scanned as part of query execution. Hence, this method has to maintain the</span></span><br><span class="line"><span class="comment"> * invariant of conservatively including every base-file&#x27;s name, that is NOT referenced in its index.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param queryFilters list of original data filters passed down from querying engine</span></span><br><span class="line"><span class="comment"> * @return list of pruned (data-skipped) candidate base-files&#x27; names</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">lookupCandidateFilesInMetadataTable</span></span>(queryFilters: <span class="type">Seq</span>[<span class="type">Expression</span>]): <span class="type">Try</span>[<span class="type">Option</span>[<span class="type">Set</span>[<span class="type">String</span>]]] = <span class="type">Try</span> &#123;</span><br><span class="line">    <span class="comment">// <span class="doctag">NOTE:</span> Data Skipping is only effective when it references columns that are indexed w/in</span></span><br><span class="line">    <span class="comment">//       the Column Stats Index (CSI). Following cases could not be effectively handled by Data Skipping:</span></span><br><span class="line">    <span class="comment">//          - Expressions on top-level column&#x27;s fields (ie, for ex filters like &quot;struct.field &gt; 0&quot;, since</span></span><br><span class="line">    <span class="comment">//          CSI only contains stats for top-level columns, in this case for &quot;struct&quot;)</span></span><br><span class="line">    <span class="comment">//          - Any expression not directly referencing top-level column (for ex, sub-queries, since there&#x27;s</span></span><br><span class="line">    <span class="comment">//          nothing CSI in particular could be applied for)</span></span><br><span class="line">    <span class="keyword">lazy</span> <span class="keyword">val</span> queryReferencedColumns = collectReferencedColumns(spark, queryFilters, schema)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!isMetadataTableEnabled || !isDataSkippingEnabled || !columnStatsIndex.isIndexAvailable) &#123;</span><br><span class="line">      validateConfig()</span><br><span class="line">      <span class="type">Option</span>.empty</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (queryFilters.isEmpty || queryReferencedColumns.isEmpty) &#123;</span><br><span class="line">      <span class="type">Option</span>.empty</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="comment">// <span class="doctag">NOTE:</span> Since executing on-cluster via Spark API has its own non-trivial amount of overhead,</span></span><br><span class="line">      <span class="comment">//       it&#x27;s most often preferential to fetch Column Stats Index w/in the same process (usually driver),</span></span><br><span class="line">      <span class="comment">//       w/o resorting to on-cluster execution.</span></span><br><span class="line">      <span class="comment">//       For that we use a simple-heuristic to determine whether we should read and process CSI in-memory or</span></span><br><span class="line">      <span class="comment">//       on-cluster: total number of rows of the expected projected portion of the index has to be below the</span></span><br><span class="line">      <span class="comment">//       threshold (of 100k records)</span></span><br><span class="line">      <span class="keyword">val</span> shouldReadInMemory = columnStatsIndex.shouldReadInMemory(<span class="keyword">this</span>, queryReferencedColumns)</span><br><span class="line"></span><br><span class="line">      columnStatsIndex.loadTransposed(queryReferencedColumns, shouldReadInMemory) &#123; transposedColStatsDF =&gt;</span><br><span class="line">        <span class="keyword">val</span> indexSchema = transposedColStatsDF.schema</span><br><span class="line">        <span class="keyword">val</span> indexFilter =</span><br><span class="line">        queryFilters.map(translateIntoColumnStatsIndexFilterExpr(_, indexSchema))</span><br><span class="line">        .reduce(<span class="type">And</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">val</span> allIndexedFileNames =</span><br><span class="line">        transposedColStatsDF.select(<span class="type">HoodieMetadataPayload</span>.<span class="type">COLUMN_STATS_FIELD_FILE_NAME</span>)</span><br><span class="line">        .collect()</span><br><span class="line">        .map(_.getString(<span class="number">0</span>))</span><br><span class="line">        .toSet</span><br><span class="line"></span><br><span class="line">        <span class="keyword">val</span> prunedCandidateFileNames =</span><br><span class="line">        transposedColStatsDF.where(<span class="keyword">new</span> <span class="type">Column</span>(indexFilter))</span><br><span class="line">        .select(<span class="type">HoodieMetadataPayload</span>.<span class="type">COLUMN_STATS_FIELD_FILE_NAME</span>)</span><br><span class="line">        .collect()</span><br><span class="line">        .map(_.getString(<span class="number">0</span>))</span><br><span class="line">        .toSet</span><br><span class="line"></span><br><span class="line">        <span class="comment">// <span class="doctag">NOTE:</span> Col-Stats Index isn&#x27;t guaranteed to have complete set of statistics for every</span></span><br><span class="line">        <span class="comment">//       base-file: since it&#x27;s bound to clustering, which could occur asynchronously</span></span><br><span class="line">        <span class="comment">//       at arbitrary point in time, and is not likely to be touching all of the base files.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">//       To close that gap, we manually compute the difference b/w all indexed (by col-stats-index)</span></span><br><span class="line">        <span class="comment">//       files and all outstanding base-files, and make sure that all base files not</span></span><br><span class="line">        <span class="comment">//       represented w/in the index are included in the output of this method</span></span><br><span class="line">        <span class="keyword">val</span> notIndexedFileNames = lookupFileNamesMissingFromIndex(allIndexedFileNames)</span><br><span class="line"></span><br><span class="line">        <span class="type">Some</span>(prunedCandidateFileNames ++ notIndexedFileNames)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h4 id="结论-2"><a href="#结论-2" class="headerlink" title="结论"></a>结论</h4><p>dataskip 的时候只使用了 column_stat_idx 信息。</p>
+<h1 id="其他优化"><a href="#其他优化" class="headerlink" title="其他优化"></a>其他优化</h1><h3 id="TimelineService"><a href="#TimelineService" class="headerlink" title="TimelineService"></a>TimelineService</h3><p>构建 timeline 的时候避免从 HDFS 上读取数据文件。</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://lvyanquan.github.io/2023/03/12/Hudi%20%E6%9F%A5%E8%AF%A2%E5%8A%A0%E9%80%9F/" title="Hudi 查询加速" target="_blank" rel="external">http://lvyanquan.github.io/2023/03/12/Hudi 查询加速/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/lvyanquan" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/luxi.jpeg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/lvyanquan" target="_blank"><span class="text-dark">困溺</span><small class="ml-1x">Big Data &amp; Open Source</small></a></h3>
+        <div>纵有疾风起，人生不言弃</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2023/03/15/linux%20%E7%A3%81%E7%9B%98%E7%A9%BA%E9%97%B4%E6%9F%A5%E7%9C%8B/" title="linux 磁盘空间查看"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2023/03/12/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/" title="一致性哈希"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  
+  <div class="bar-right">
+    
+  </div>
+  </div>
+</nav>
+  
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/lvyanquan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://twitter.com/decq12ybhl" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: 'rC6NfQThDktWAWCPwaKJBNqV-gzGzoHsz',
+    appKey: 'CbrA9aEkMCEeiiEnBhq2IuJi',
+    placeholder: '评论区',
+    avatar: 'l',
+    meta: meta,
+    pageSize: '20' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
