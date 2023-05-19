@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>http://lvyanquan.github.io/2023/05/19/Hudi%20cdc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</loc>
+    <lastmod>2023-05-19</lastmod>
+  </url>
+  <url>
     <loc>http://lvyanquan.github.io/2023/05/17/Hudi%20merge%20into%E5%A4%9A%E6%9D%A1%E4%BB%B6%E6%9B%B4%E6%96%B0/</loc>
     <lastmod>2023-05-17</lastmod>
   </url>

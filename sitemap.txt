@@ -1,3 +1,4 @@
+http://lvyanquan.github.io/2023/05/19/Hudi%20cdc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/
 http://lvyanquan.github.io/2023/05/17/Hudi%20merge%20into%E5%A4%9A%E6%9D%A1%E4%BB%B6%E6%9B%B4%E6%96%B0/
 http://lvyanquan.github.io/2023/05/12/%E4%BD%BF%E7%94%A8anki%E6%9E%84%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%95%E8%AF%8D%E5%AD%A6%E4%B9%A0%E5%BA%93/
 http://lvyanquan.github.io/2023/05/10/LinkageError%E8%A7%A3%E5%86%B3/
