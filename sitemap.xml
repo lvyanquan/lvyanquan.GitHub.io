@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://lvyanquan.github.io/2023/05/22/FlinkCDC%E7%AC%94%E8%AE%B0/</loc>
+    
+    <lastmod>2023-05-22</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>http://lvyanquan.github.io/links/index.html</loc>
     
     <lastmod>2023-05-22</lastmod>

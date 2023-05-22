@@ -6,7 +6,7 @@
   <link href="http://lvyanquan.github.io/atom.xml" rel="self"/>
   
   <link href="http://lvyanquan.github.io/"/>
-  <updated>2023-05-19T09:54:59.325Z</updated>
+  <updated>2023-05-22T14:02:32.860Z</updated>
   <id>http://lvyanquan.github.io/</id>
   
   <author>
@@ -15,6 +15,28 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>FlinkCDC笔记</title>
+    <link href="http://lvyanquan.github.io/2023/05/22/FlinkCDC%E7%AC%94%E8%AE%B0/"/>
+    <id>http://lvyanquan.github.io/2023/05/22/FlinkCDC%E7%AC%94%E8%AE%B0/</id>
+    <published>2023-05-22T14:02:32.826Z</published>
+    <updated>2023-05-22T14:02:32.860Z</updated>
+    
+    <content type="html"><![CDATA[<p>q1: 有什么方式判定mysql的快照读阶段是否完成呢？<br>a: currentEmitEventTimeLag 指标记录的是 Source 发送一条记录到下游节点的时间点和该记录在 DB 里产生时间点差值，用于衡量数据从 DB 产生到离开 Source 节点的延迟。用户可以通过该指标判断 source 是否进入了 binlog 读取阶段：<br>即当该指标为 0 时，代表还在全量历史读取阶段；<br>当大于 0 时，则代表进入了 binlog 读取阶段。<br>参考<a href="https://cwiki.apache.org/confluence/display/FLINK/FLIP-33%3A+Standardize+Connector+Metrics?spm=a2c6h.12873639.article-detail.8.291d5d5e6GhYbj">FLIP-33: Standardize Connector Metrics</a></p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;q1: 有什么方式判定mysql的快照读阶段是否完成呢？&lt;br&gt;a: currentEmitEventTimeLag 指标记录的是 Source 发送一条记录到下游节点的时间点和该记录在 DB 里产生时间点差值，用于衡量数据从 DB 产生到离开 Source 节点的延迟。用</summary>
+      
+    
+    
+    
+    
+    <category term="FlinkCDC" scheme="http://lvyanquan.github.io/tags/FlinkCDC/"/>
+    
+  </entry>
   
   <entry>
     <title>Hudi cdc源码分析</title>
