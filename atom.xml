@@ -103,9 +103,9 @@
     
     
     
-    <category term="Java" scheme="http://lvyanquan.github.io/tags/Java/"/>
-    
     <category term="bugfix" scheme="http://lvyanquan.github.io/tags/bugfix/"/>
+    
+    <category term="Java" scheme="http://lvyanquan.github.io/tags/Java/"/>
     
   </entry>
   
@@ -127,9 +127,9 @@
     
     
     
-    <category term="juc" scheme="http://lvyanquan.github.io/tags/juc/"/>
-    
     <category term="Java" scheme="http://lvyanquan.github.io/tags/Java/"/>
+    
+    <category term="juc" scheme="http://lvyanquan.github.io/tags/juc/"/>
     
   </entry>
   
