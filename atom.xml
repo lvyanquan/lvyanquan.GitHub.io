@@ -249,29 +249,6 @@
   </entry>
   
   <entry>
-    <title>面试题 17.05. 字母与数字</title>
-    <link href="http://lvyanquan.github.io/2023/03/12/%E9%9D%A2%E8%AF%95%E9%A2%98%2017.05.%20%E5%AD%97%E6%AF%8D%E4%B8%8E%E6%95%B0%E5%AD%97/"/>
-    <id>http://lvyanquan.github.io/2023/03/12/%E9%9D%A2%E8%AF%95%E9%A2%98%2017.05.%20%E5%AD%97%E6%AF%8D%E4%B8%8E%E6%95%B0%E5%AD%97/</id>
-    <published>2023-03-12T02:22:41.000Z</published>
-    <updated>2023-04-26T09:17:26.195Z</updated>
-    
-    <content type="html"><![CDATA[<p><a href="https://leetcode.cn/problems/find-longest-subarray-lcci/description/">面试题 17.05. 字母与数字</a></p><h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>给定一个放有字母和数字的数组，找到最长的子数组，且包含的字母和数字的个数相同。</p><p>返回该子数组，若存在多个最长子数组，返回左端点下标值最小的子数组。若不存在这样的数组，返回一个空数组。</p><p>示例 1:</p><p>输入: [“A”,”1”,”B”,”C”,”D”,”2”,”3”,”4”,”E”,”5”,”F”,”G”,”6”,”7”,”H”,”I”,”J”,”K”,”L”,”M”]</p><p>输出: [“A”,”1”,”B”,”C”,”D”,”2”,”3”,”4”,”E”,”5”,”F”,”G”,”6”,”7”]    </p><p>示例 2:</p><p>输入: [“A”,”A”]</p><p>输出: []</p><p>提示：</p><p>  array.length &lt;&#x3D; 100000</p><h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol><li>看到 100000 这个数量就知道不能用 n2 的复杂度了，而且这题没有明显的二分特点，所以只能考虑 n 的时间复杂度，那么只能考虑使用哈希表降低搜索范围了。    </li><li>但是哈希表里应该保存什么呢？因为我们要求的是子数组里数字和字符数量相同，那么在枚举右端点的时候，我们需要快速找到能够让区间满足要求的左端点。这引导我们考虑采用前缀和的方式做处理，只要右端点的“数字出现的次数 - 字符串出现的次数”的差值等于左端点就可以满足要求了。<br>前缀和的计算方式：<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">key += array[i].charAt(<span class="number">0</span>) &gt;= <span class="string">&#x27;0&#x27;</span> &amp;&amp; array[i].charAt(<span class="number">0</span>) &lt;= <span class="string">&#x27;9&#x27;</span> ? <span class="number">1</span> : -<span class="number">1</span>;</span><br></pre></td></tr></table></figure></li><li>因为题目要求在区间长度相同时返回最左区间，所以哈希表的记录的是键为“数字出现的次数 - 字符串出现的次数”，值为这个键出现最早的位置。</li></ol><h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> String[] findLongestSubarray(String[] array) &#123;</span><br><span class="line">        Map&lt;Integer, Integer&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        <span class="type">int</span> <span class="variable">key</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">left</span> <span class="operator">=</span> <span class="number">0</span>, len = <span class="number">0</span>;</span><br><span class="line">        map.put(<span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;array.length;i++) &#123;</span><br><span class="line">            key += array[i].charAt(<span class="number">0</span>) &gt;= <span class="string">&#x27;0&#x27;</span> &amp;&amp; array[i].charAt(<span class="number">0</span>) &lt;= <span class="string">&#x27;9&#x27;</span> ? <span class="number">1</span> : -<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span>(map.containsKey(key)) &#123;</span><br><span class="line">                <span class="type">int</span> <span class="variable">pos</span> <span class="operator">=</span> map.get(key);</span><br><span class="line">                <span class="keyword">if</span>( (len &lt; i - pos) || ((len == i - pos) &amp;&amp; pos &lt; left) )&#123;</span><br><span class="line">                    len = i - pos;</span><br><span class="line">                    left = pos + <span class="number">1</span>;</span><br><span class="line">                &#125; </span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                map.put(key, i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> Arrays.copyOfRange(array, left, left + len);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;p&gt;&lt;a href=&quot;https://leetcode.cn/problems/find-longest-subarray-lcci/description/&quot;&gt;面试题 17.05. 字母与数字&lt;/a&gt;&lt;/p&gt;
-&lt;h2 id=&quot;题目&quot;&gt;&lt;a href=&quot;#题目&quot; class=&quot;</summary>
-      
-    
-    
-    
-    
-    <category term="算法" scheme="http://lvyanquan.github.io/tags/%E7%AE%97%E6%B3%95/"/>
-    
-  </entry>
-  
-  <entry>
     <title>两阶段提交</title>
     <link href="http://lvyanquan.github.io/2023/03/12/%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4/"/>
     <id>http://lvyanquan.github.io/2023/03/12/%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4/</id>
@@ -292,6 +269,29 @@
     <category term="分布式" scheme="http://lvyanquan.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
     
     <category term="大数据" scheme="http://lvyanquan.github.io/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>面试题 17.05. 字母与数字</title>
+    <link href="http://lvyanquan.github.io/2023/03/12/%E9%9D%A2%E8%AF%95%E9%A2%98%2017.05.%20%E5%AD%97%E6%AF%8D%E4%B8%8E%E6%95%B0%E5%AD%97/"/>
+    <id>http://lvyanquan.github.io/2023/03/12/%E9%9D%A2%E8%AF%95%E9%A2%98%2017.05.%20%E5%AD%97%E6%AF%8D%E4%B8%8E%E6%95%B0%E5%AD%97/</id>
+    <published>2023-03-12T02:22:41.000Z</published>
+    <updated>2023-04-26T09:17:26.195Z</updated>
+    
+    <content type="html"><![CDATA[<p><a href="https://leetcode.cn/problems/find-longest-subarray-lcci/description/">面试题 17.05. 字母与数字</a></p><h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>给定一个放有字母和数字的数组，找到最长的子数组，且包含的字母和数字的个数相同。</p><p>返回该子数组，若存在多个最长子数组，返回左端点下标值最小的子数组。若不存在这样的数组，返回一个空数组。</p><p>示例 1:</p><p>输入: [“A”,”1”,”B”,”C”,”D”,”2”,”3”,”4”,”E”,”5”,”F”,”G”,”6”,”7”,”H”,”I”,”J”,”K”,”L”,”M”]</p><p>输出: [“A”,”1”,”B”,”C”,”D”,”2”,”3”,”4”,”E”,”5”,”F”,”G”,”6”,”7”]    </p><p>示例 2:</p><p>输入: [“A”,”A”]</p><p>输出: []</p><p>提示：</p><p>  array.length &lt;&#x3D; 100000</p><h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol><li>看到 100000 这个数量就知道不能用 n2 的复杂度了，而且这题没有明显的二分特点，所以只能考虑 n 的时间复杂度，那么只能考虑使用哈希表降低搜索范围了。    </li><li>但是哈希表里应该保存什么呢？因为我们要求的是子数组里数字和字符数量相同，那么在枚举右端点的时候，我们需要快速找到能够让区间满足要求的左端点。这引导我们考虑采用前缀和的方式做处理，只要右端点的“数字出现的次数 - 字符串出现的次数”的差值等于左端点就可以满足要求了。<br>前缀和的计算方式：<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">key += array[i].charAt(<span class="number">0</span>) &gt;= <span class="string">&#x27;0&#x27;</span> &amp;&amp; array[i].charAt(<span class="number">0</span>) &lt;= <span class="string">&#x27;9&#x27;</span> ? <span class="number">1</span> : -<span class="number">1</span>;</span><br></pre></td></tr></table></figure></li><li>因为题目要求在区间长度相同时返回最左区间，所以哈希表的记录的是键为“数字出现的次数 - 字符串出现的次数”，值为这个键出现最早的位置。</li></ol><h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> String[] findLongestSubarray(String[] array) &#123;</span><br><span class="line">        Map&lt;Integer, Integer&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        <span class="type">int</span> <span class="variable">key</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">left</span> <span class="operator">=</span> <span class="number">0</span>, len = <span class="number">0</span>;</span><br><span class="line">        map.put(<span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;array.length;i++) &#123;</span><br><span class="line">            key += array[i].charAt(<span class="number">0</span>) &gt;= <span class="string">&#x27;0&#x27;</span> &amp;&amp; array[i].charAt(<span class="number">0</span>) &lt;= <span class="string">&#x27;9&#x27;</span> ? <span class="number">1</span> : -<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span>(map.containsKey(key)) &#123;</span><br><span class="line">                <span class="type">int</span> <span class="variable">pos</span> <span class="operator">=</span> map.get(key);</span><br><span class="line">                <span class="keyword">if</span>( (len &lt; i - pos) || ((len == i - pos) &amp;&amp; pos &lt; left) )&#123;</span><br><span class="line">                    len = i - pos;</span><br><span class="line">                    left = pos + <span class="number">1</span>;</span><br><span class="line">                &#125; </span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                map.put(key, i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> Arrays.copyOfRange(array, left, left + len);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;&lt;a href=&quot;https://leetcode.cn/problems/find-longest-subarray-lcci/description/&quot;&gt;面试题 17.05. 字母与数字&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;题目&quot;&gt;&lt;a href=&quot;#题目&quot; class=&quot;</summary>
+      
+    
+    
+    
+    
+    <category term="算法" scheme="http://lvyanquan.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     
   </entry>
   
