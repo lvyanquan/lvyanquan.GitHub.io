@@ -183,20 +183,6 @@
   </url>
   
   <url>
-    <loc>http://lvyanquan.github.io/tags/bugfix/</loc>
-    <lastmod>2023-05-22</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lvyanquan.github.io/tags/Java/</loc>
-    <lastmod>2023-05-22</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lvyanquan.github.io/tags/%E8%BF%90%E7%BB%B4/</loc>
     <lastmod>2023-05-22</lastmod>
     <changefreq>weekly</changefreq>
@@ -212,6 +198,20 @@
   
   <url>
     <loc>http://lvyanquan.github.io/tags/juc/</loc>
+    <lastmod>2023-05-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lvyanquan.github.io/tags/Java/</loc>
+    <lastmod>2023-05-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lvyanquan.github.io/tags/bugfix/</loc>
     <lastmod>2023-05-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
